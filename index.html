@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thời Khóa Biểu Đại Học</title>
+    <style>
+        /* CSS Variables quản lý Theme */
+        :root {
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --surface-color: white;
+            --border-color: #d1d5db;
+            --th-bg: #0055a5;
+            --th-text: white;
+            --time-bg: #f0f4f8;
+            --time-small: #666;
+            --break-line: #cbd5e1;
+            --input-bg: #fafafa;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --surface-color: #1e1e1e;
+            --border-color: #333;
+            --th-bg: #1f2937;
+            --th-text: #e0e0e0;
+            --time-bg: #2d3748;
+            --time-small: #a0aec0;
+            --break-line: #4a5568;
+            --input-bg: #2d3748;
+        }
+
+        html, body { 
+            height: 100%; margin: 0; padding: 0; overflow: hidden; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-color); color: var(--text-color); 
+            display: flex; flex-direction: column; transition: background-color 0.3s;
+        }
+        
+        /* THANH CÔNG CỤ TRÊN CÙNG (Khắc phục lỗi đè chữ) */
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border-color); z-index: 20;
+        }
+        .top-bar .title {
+            font-size: 16px; font-weight: bold; text-transform: uppercase; 
+            color: var(--text-color); margin: 0;
+        }
+        .top-bar .controls {
+            display: flex; gap: 10px;
+        }
+        .top-bar button {
+            padding: 6px 12px; border: none; border-radius: 4px; font-size: 13px; font-weight: bold;
+            cursor: pointer; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: opacity 0.2s;
+        }
+        .top-bar button:hover { opacity: 0.8; }
+        #themeBtn { background-color: #34495e; }
+        #editBtn { background-color: #f39c12; display: none; }
+
+        /* Khu vực nhập liệu */
+        #inputSection { 
+            background: var(--surface-color); padding: 15px 20px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            display: flex; flex-direction: column; gap: 10px; z-index: 10; 
+        }
+        textarea { 
+            width: 100%; height: 80px; padding: 10px; border: 1px solid var(--border-color); 
+            border-radius: 4px; resize: none; box-sizing: border-box; 
+            font-family: monospace; font-size: 13px; 
+            background-color: var(--input-bg); color: var(--text-color);
+        }
+        .btn-group { display: flex; justify-content: center; }
+        .btn-create { 
+            padding: 8px 25px; background-color: #0055a5; color: white; 
+            border: none; border-radius: 4px; font-size: 14px; font-weight: bold;
+            cursor: pointer; transition: background 0.2s; 
+        }
+        .btn-create:hover { background-color: #003366; }
+        
+        /* Khu vực hiển thị bảng TKB */
+        #tableSection { 
+            flex-grow: 1; padding: 8px; box-sizing: border-box; 
+            display: flex; flex-direction: column; background: var(--surface-color); 
+        }
+        table { width: 100%; height: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid var(--border-color); text-align: center; vertical-align: middle; }
+        th { background-color: var(--th-bg); color: var(--th-text); font-size: 14px; font-weight: 600; height: 35px; }
+        td { height: 1%; padding: 2px; } 
+
+        .time-col { background-color: var(--time-bg); color: var(--text-color); font-weight: bold; width: 90px; font-size: 12px; }
+        .time-col small { font-weight: normal; color: var(--time-small); display: block; font-size: 11px; margin-top: 2px; }
+        .session-break td { background-color: var(--break-line); height: 4px; padding: 0; border: none; }
+        
+        /* Khối môn học */
+        .class-cell { 
+            color: white; border-radius: 4px; padding: 4px; 
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1); 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            height: 100%; width: 100%; box-sizing: border-box; overflow: hidden;
+        }
+        .class-cell strong { font-size: 13px; line-height: 1.2; margin-bottom: 5px; text-align: center; }
+        
+        /* Style cho Số phòng */
+        .class-cell .room { 
+            font-size: 12px; background: rgba(0,0,0,0.25); 
+            padding: 3px 8px; border-radius: 4px; margin-bottom: 4px; 
+        }
+        .class-cell .room b { font-size: 15px; font-weight: 900; color: #ffeb3b; letter-spacing: 0.5px; } 
+        
+        /* Style cho Tuần học */
+        .class-cell .week { 
+            font-size: 11px; background: rgba(255,255,255,0.2); 
+            padding: 2px 6px; border-radius: 10px; font-style: italic; 
+        }
+    </style>
+</head>
+<body>
+
+<!-- Thanh công cụ chứa nút bấm, tách biệt với bảng -->
+<div class="top-bar">
+    <div class="title">Thời Khóa Biểu</div>
+    <div class="controls">
+        <button id="themeBtn" onclick="toggleTheme()">🌙 Giao diện tối</button>
+        <button id="editBtn" onclick="toggleInput(true)">✏️ Sửa dữ liệu</button>
+    </div>
+</div>
+
+<div id="inputSection">
+    <textarea id="dataInput" placeholder="Dán dữ liệu lịch học copy từ web trường vào đây..."></textarea>
+    <div class="btn-group">
+        <button class="btn-create" onclick="processData()">Tạo Thời Khóa Biểu</button>
+    </div>
+</div>
+
+<div id="tableSection">
+    <table id="timetable">
+        <thead>
+            <tr>
+                <th style="width: 90px;">Thời gian</th>
+                <th>Thứ 2</th>
+                <th>Thứ 3</th>
+                <th>Thứ 4</th>
+                <th>Thứ 5</th>
+                <th>Thứ 6</th>
+                <th>Thứ 7</th>
+                <th>Chủ Nhật</th>
+            </tr>
+        </thead>
+        <tbody id="scheduleBody">
+            <!-- Render từ JS -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const timeSlots = [
+        "7h00 - 7h50", "8h00 - 8h50", "9h00 - 9h50", "10h00 - 10h50", "11h00 - 11h50", 
+        "12h30 - 13h20", "13h30 - 14h20", "14h30 - 15h20", "15h30 - 16h20", "16h30 - 17h20", 
+        "17h30 - 18h15", "18h15 - 19h00", "19h10 - 19h55", "19h55 - 20h40"
+    ];
+    
+    const colors = ['#27ae60', '#2980b9', '#8e44ad', '#d35400', '#c0392b', '#16a085', '#34495e', '#e67e22', '#00796B', '#512DA8'];
+
+    window.onload = function() {
+        const savedTheme = localStorage.getItem('tkb_theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeBtn').innerHTML = '☀️ Giao diện sáng';
+        }
+
+        const savedData = localStorage.getItem('tkb_data');
+        if (savedData) {
+            document.getElementById('dataInput').value = savedData;
+            processData(); 
+        } else {
+            renderTable([]); 
+        }
+    };
+
+    function toggleTheme() {
+        const body = document.documentElement;
+        const themeBtn = document.getElementById('themeBtn');
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+            localStorage.setItem('tkb_theme', 'light');
+            themeBtn.innerHTML = '🌙 Giao diện tối';
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('tkb_theme', 'dark');
+            themeBtn.innerHTML = '☀️ Giao diện sáng';
+        }
+    }
+
+    function toggleInput(show) {
+        document.getElementById('inputSection').style.display = show ? 'flex' : 'none';
+        document.getElementById('editBtn').style.display = show ? 'none' : 'block';
+    }
+
+    function processData() {
+        const rawData = document.getElementById('dataInput').value;
+        if (!rawData.trim()) return;
+
+        localStorage.setItem('tkb_data', rawData);
+        
+        const lines = rawData.split('\n');
+        const classes = [];
+        let colorIndex = 0;
+
+        lines.forEach(line => {
+            if (!line.trim()) return;
+            const parts = line.split('\t');
+            let subjectName = parts.length > 2 && parts[2].trim() !== "" ? parts[2].trim() : "Môn học";
+            
+            let weekInfo = "";
+            for(let i = parts.length - 1; i >= 0; i--) {
+                let p = parts[i].trim();
+                if (p && /^[0-9\-,;]+$/.test(p) && p.includes('-')) {
+                    weekInfo = p;
+                    break;
+                }
+            }
+
+            const scheduleRegex = /(Thứ [2-7]|CN)\s*,\s*(\d+)\s*-\s*(\d+)\s*,\s*([^\s;\t,]+)/g;
+            let match;
+            let hasMatch = false;
+
+            while ((match = scheduleRegex.exec(line)) !== null) {
+                hasMatch = true;
+                let dayStr = match[1];
+                let startPeriod = parseInt(match[2]);
+                let endPeriod = parseInt(match[3]);
+                let room = match[4].trim();
+
+                let colIndex = dayStr === 'CN' ? 6 : parseInt(dayStr.replace('Thứ ', '')) - 2;
+
+                classes.push({
+                    subject: subjectName,
+                    day: colIndex,
+                    start: startPeriod,
+                    end: endPeriod,
+                    room: room,
+                    week: weekInfo,
+                    color: colors[colorIndex % colors.length]
+                });
+            }
+            if (hasMatch) colorIndex++;
+        });
+
+        renderTable(classes);
+        toggleInput(false); 
+    }
+
+    function renderTable(classes) {
+        const tbody = document.getElementById('scheduleBody');
+        tbody.innerHTML = '';
+        const grid = Array.from({ length: 14 }, () => Array(7).fill(null));
+
+        classes.forEach(cls => {
+            for (let i = cls.start - 1; i <= cls.end - 1; i++) {
+                if (i < 0 || i > 13) continue; 
+                grid[i][cls.day] = (i === cls.start - 1) ? cls : "skip"; 
+            }
+        });
+
+        for (let r = 0; r < 14; r++) {
+            if (r === 5 || r === 10) {
+                let breakRow = document.createElement('tr');
+                breakRow.className = 'session-break';
+                let breakCell = document.createElement('td');
+                breakCell.colSpan = 8;
+                breakRow.appendChild(breakCell);
+                tbody.appendChild(breakRow);
+            }
+
+            let tr = document.createElement('tr');
+            
+            let tdTime = document.createElement('td');
+            tdTime.className = 'time-col';
+            tdTime.innerHTML = `Tiết ${r + 1}<br><small>${timeSlots[r]}</small>`;
+            tr.appendChild(tdTime);
+
+            for (let c = 0; c < 7; c++) {
+                if (grid[r][c] === "skip") continue;
+
+                let td = document.createElement('td');
+                if (grid[r][c] !== null) {
+                    let cls = grid[r][c];
+                    td.rowSpan = cls.end - cls.start + 1;
+                    
+                    let cellDiv = document.createElement('div');
+                    cellDiv.className = 'class-cell';
+                    cellDiv.style.backgroundColor = cls.color;
+                    
+                    let htmlContent = `<strong>${cls.subject}</strong>
+                                       <span class="room">Phòng: <b>${cls.room}</b></span>`;
+                    if (cls.week) {
+                        htmlContent += `<span class="week">Tuần: ${cls.week}</span>`;
+                    }
+                    cellDiv.innerHTML = htmlContent;
+                    
+                    td.appendChild(cellDiv);
+                }
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        }
+    }
+</script>
+
+</body>
+</html>
